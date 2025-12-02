@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>別府市・人流が最も多いエリアの人流ダッシュボード</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 20px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 0.2rem;
+    }
+    h2 {
+      margin-top: 2rem;
+      font-size: 1.3rem;
+    }
+    .chart-container {
+      position: relative;
+      margin-top: 1rem;
+      height: 360px;
+    }
+    .note {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>別府市・人流が最も多いエリアの人流ダッシュボード</h1>
+  <p>
+    別府市の中で、人流が最も多いメッシュ（3次メッシュ）を対象に、月別・国別の人流推移を可視化しています。
+  </p>
+
+  <section>
+    <h2>月別の人流推移（全国籍合計）</h2>
+    <div class="chart-container">
+      <canvas id="monthlyTotalChart"></canvas>
+    </div>
+    <p class="note">
+      ※ 指標：allday（終日滞在人口の合計 または平均）。定義はデータ提供元の仕様に準拠。
+    </p>
+  </section>
+
+  <section>
+    <h2>最新月の国別シェア</h2>
+    <p id="latestMonthLabel"></p>
+    <div class="chart-container">
+      <canvas id="latestMonthCountryChart"></canvas>
+    </div>
+  </section>
+
+  <section>
+    <h2>データについて</h2>
+    <ul>
+      <li>対象エリア：別府市内で人流が最も多い 3次メッシュ（詳細位置は非公開）</li>
+      <li>データ元：自社推計による人流データ（meshcode_03 ベース）</li>
+      <li>集計単位：月 × 国籍（country）</li>
+      <li>公開形式：BigQuery 集計結果を JSON（NDJSON）として Google Cloud Storage に保存</li>
+    </ul>
+  </section>
+
+  <script src="main.js"></script>
+</body>
+</html>
