@@ -14,6 +14,72 @@
       align-items: center;
       justify-content: center;
     }
+    /* ログインオーバーレイ */
+    .login-wrapper {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.25);
+      z-index: 9999;
+    }
+    
+    .login-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 28px;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+    
+    .login-card h1 {
+      font-size: 1.4rem;
+      margin-top: 0;
+      margin-bottom: 0.4rem;
+    }
+    
+    .login-card p {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    
+    #loginForm {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    #passwordInput {
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    
+    #loginForm button {
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: none;
+      background: #0366d6;
+      color: #fff;
+      cursor: pointer;
+    }
+    
+    #loginForm button:hover {
+      background: #024faa;
+    }
+    
+    .login-error {
+      color: #d33;
+      font-size: 0.8rem;
+      min-height: 1em;
+    }
     .page-wrapper {
       max-width: 960px;
       width: 100%;
@@ -72,25 +138,92 @@
   </style>
 </head>
 <body>
-  <div class="page-wrapper">
+  <!-- ★ ログイン画面 -->
+  <div id="login" class="login-wrapper">
+    <div class="login-card">
+      <h1>Beppu DMP ログイン</h1>
+      <p>閲覧にはパスワードが必要です。</p>
+      <form id="loginForm">
+        <input
+          id="passwordInput"
+          type="password"
+          placeholder="パスワード"
+          autocomplete="off"
+        />
+        <button type="submit">ログイン</button>
+        <p id="loginError" class="login-error"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ★ 本文用ラッパー（最初は非表示） -->
+  <div id="app" style="display: none;">
     <div class="container">
+      <!-- ここに今までの index.html の中身（h1 〜 最後まで） -->
       <h1>別府DMPダッシュボード</h1>
-      <p class="lead">別府市の人流・Webアクセスを可視化した実験用ダッシュボードです。</p>
+      <p class="lead">別府市の人流・Webアクセスを可視化した実験用ダッシュボードです。見たいデータを選んでください。</p>
 
       <div class="grid">
         <a class="card" href="peopleflow.html">
           <div class="card-title">人流ダッシュボード</div>
-          <div class="card-desc">別府市で人流が最も多いメッシュを対象に集計。</div>
+          <div class="card-desc">
+            別府市で人流が最も多いメッシュを対象に、月別・国別の人流推移を表示します。
+          </div>
         </a>
 
         <a class="card" href="ga_country.html">
           <div class="card-title">GA4 国別月次ダッシュボード</div>
-          <div class="card-desc">GA4の国別月次セッション・AUを可視化。</div>
+          <div class="card-desc">
+            GA4のデータをもとに、国別の月次セッション数・アクティブユーザー数の推移を表示します。
+          </div>
         </a>
       </div>
 
-      <p class="small">※ このサイトはPOC版です。</p>
+      <p class="small">※ このサイトはPOC版です。数値は試験用のサンプル集計を含む場合があります。</p>
     </div>
   </div>
+
+  <!-- ★ ログイン制御用スクリプト -->
+  <script>
+    (function() {
+      const PASSWORD = 'beppu2024'; // ← 好きなパスワードに変えてOK（ただしソースから丸見えです）
+
+      function showApp() {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const loggedIn = localStorage.getItem('beppu_dmp_logged_in') === 'true';
+        const loginEl = document.getElementById('login');
+        const appEl = document.getElementById('app');
+
+        if (loggedIn) {
+          // 既にログイン済みならそのまま表示
+          showApp();
+          return;
+        }
+
+        // ログインフォームの処理
+        const form = document.getElementById('loginForm');
+        const passwordInput = document.getElementById('passwordInput');
+        const errorEl = document.getElementById('loginError');
+
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          const value = passwordInput.value.trim();
+
+          if (value === PASSWORD) {
+            localStorage.setItem('beppu_dmp_logged_in', 'true');
+            showApp();
+          } else {
+            errorEl.textContent = 'パスワードが違います。';
+            passwordInput.value = '';
+            passwordInput.focus();
+          }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
