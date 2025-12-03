@@ -1,7 +1,7 @@
 // immigration.js
 
 // ====== 設定エリア ======
-const GCS_BASE_URL = "https://storage.googleapis.com/labo_data_immigration/year/";
+const GCS_BASE_URL = "https://storage.googleapis.com/beppu_dmp/immigration/year/";
 
 const PORT_DEFINITIONS = [
   { id: "oitaairport",    label: "大分空港" },
