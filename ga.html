@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>GA4：予約クリックの推移ダッシュボード</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 20px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 0.2rem; }
+    h2 { margin-top: 2rem; font-size: 1.3rem; }
+    .chart-container {
+      position: relative;
+      margin-top: 1rem;
+      height: 360px;
+    }
+  </style>
+</head>
+<body>
+  <h1>GA4：予約クリック（Click_Reservation）の推移</h1>
+  <p>eventName = <code>Click_Reservation</code> を対象としたセッション数・アクティブユーザー数の推移です。</p>
+
+  <section>
+    <h2>日別セッション数（合計）</h2>
+    <div class="chart-container">
+      <canvas id="gaDailySessionsChart"></canvas>
+    </div>
+  </section>
+
+  <section>
+    <h2>ページ別 予約クリック セッション数（最新30日）</h2>
+    <div class="chart-container">
+      <canvas id="gaPageSessionsChart"></canvas>
+    </div>
+  </section>
+
+  <script src="main_ga.js"></script>
+</body>
+</html>
