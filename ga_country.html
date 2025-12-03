@@ -62,51 +62,172 @@
       color: #555;
       margin-top: 0.5rem;
     }
+
+    /* --- 簡易ログイン用スタイル --- */
+    .login-wrapper {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.25);
+      z-index: 9999;
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 28px;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+    .login-card h1 {
+      font-size: 1.4rem;
+      margin-top: 0;
+      margin-bottom: 0.4rem;
+    }
+    .login-card p {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    #loginForm {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #passwordInput {
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #loginForm button {
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: none;
+      background: #0366d6;
+      color: #fff;
+      cursor: pointer;
+    }
+    #loginForm button:hover {
+      background: #024faa;
+    }
+    .login-error {
+      color: #d33;
+      font-size: 0.8rem;
+      min-height: 1em;
+    }
   </style>
 </head>
 <body>
-  <h1>GA4：国別の月次推移</h1>
-  <p>
-    GA4のデータから、<strong>月別 × 国 × デバイス</strong>を集計し、国別の月次推移を表示しています。
-  </p>
-
-  <section>
-    <h2>国別の月次推移（セッション数）</h2>
-
-    <div class="controls">
-      <label>
-        国コード：
-        <select id="countrySelect"></select>
-      </label>
-      <button id="downloadBtn">この国のデータをCSVダウンロード</button>
+  <!-- ▼ ログイン画面 -->
+  <div id="login" class="login-wrapper">
+    <div class="login-card">
+      <h1>Beppu DMP ログイン</h1>
+      <p>GA4国別ダッシュボードの閲覧にはパスワードが必要です。</p>
+      <form id="loginForm">
+        <input
+          id="passwordInput"
+          type="password"
+          placeholder="パスワード"
+          autocomplete="off"
+        />
+        <button type="submit">ログイン</button>
+        <p id="loginError" class="login-error"></p>
+      </form>
     </div>
+  </div>
 
-    <div class="chart-container">
-      <canvas id="countryMonthlyChart"></canvas>
-    </div>
-
-    <p class="note">
-      ※ GA4の <code>yearMonth</code>, <code>countryId</code>, <code>deviceCategory</code> を元に、デバイスを合算して国別の月次値を算出しています。
+  <!-- ▼ 本文（最初は非表示） -->
+  <div id="app" style="display: none;">
+    <h1>GA4：国別の月次推移</h1>
+    <p>
+      GA4のデータから、<strong>月別 × 国 × デバイス</strong>を集計し、国別の月次推移を表示しています。
     </p>
-  </section>
 
-  <section>
-    <h2>国別の月次データ一覧</h2>
-    <div class="table-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>年月</th>
-            <th>セッション数</th>
-            <th>アクティブユーザー数</th>
-          </tr>
-        </thead>
-        <tbody id="dataTableBody"></tbody>
-      </table>
-    </div>
-  </section>
+    <section>
+      <h2>国別の月次推移（セッション数）</h2>
+
+      <div class="controls">
+        <label>
+          国コード：
+          <select id="countrySelect"></select>
+        </label>
+        <button id="downloadBtn">この国のデータをCSVダウンロード</button>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="countryMonthlyChart"></canvas>
+      </div>
+
+      <p class="note">
+        ※ GA4の <code>yearMonth</code>, <code>countryId</code>, <code>deviceCategory</code> を元に、デバイスを合算して国別の月次値を算出しています。
+      </p>
+    </section>
+
+    <section>
+      <h2>国別の月次データ一覧</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>年月</th>
+              <th>セッション数</th>
+              <th>アクティブユーザー数</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 
   <script src="main_ga_country.js"></script>
+
+  <!-- ▼ ログイン制御用スクリプト -->
+  <script>
+    (function () {
+      // ★ パスワードはここで設定（index と同じにしておく）
+      const PASSWORD = 'beppu2024';
+      const STORAGE_KEY = 'beppu_dmp_logged_in';
+
+      function showApp() {
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        const loggedIn = localStorage.getItem(STORAGE_KEY) === 'true';
+
+        if (loggedIn) {
+          // すでにログイン済みなら、そのまま表示
+          showApp();
+          return;
+        }
+
+        const form = document.getElementById('loginForm');
+        const passwordInput = document.getElementById('passwordInput');
+        const errorEl = document.getElementById('loginError');
+
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          const value = passwordInput.value.trim();
+
+          if (value === PASSWORD) {
+            localStorage.setItem(STORAGE_KEY, 'true');
+            showApp();
+          } else {
+            errorEl.textContent = 'パスワードが違います。';
+            passwordInput.value = '';
+            passwordInput.focus();
+          }
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
-
