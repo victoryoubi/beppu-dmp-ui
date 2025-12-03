@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>別府DMP | 出入国データ（港湾・空港）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: url("img/beppu-bg.jpg") center center / cover no-repeat fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* ログインオーバーレイ */
+    .login-wrapper {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.25);
+      z-index: 9999;
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 28px;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    }
+    .login-card h1 {
+      font-size: 1.4rem;
+      margin-top: 0;
+      margin-bottom: 0.4rem;
+    }
+    .login-card p {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
+    #loginForm {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #passwordInput {
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #loginForm button {
+      padding: 8px 10px;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      border: none;
+      background: #0366d6;
+      color: #fff;
+      cursor: pointer;
+    }
+    #loginForm button:hover {
+      background: #024faa;
+    }
+    .login-error {
+      color: #d33;
+      font-size: 0.8rem;
+      min-height: 1em;
+    }
+
+    /* ページ本体 */
+    #app {
+      display: none; /* ログイン前は非表示 */
+      max-width: 960px;
+      width: 100%;
+      padding: 32px;
+      background: rgba(255, 255, 255, 0.92);
+      border-radius: 20px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+      backdrop-filter: blur(4px);
+    }
+    .container {
+      max-width: 960px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+    p.lead {
+      margin-top: 0;
+      color: #555;
+      margin-bottom: 1.5rem;
+    }
+    .immigration-page section {
+      margin-top: 24px;
+    }
+    .immigration-page table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 14px;
+    }
+    .immigration-page th,
+    .immigration-page td {
+      border: 1px solid #e5e7eb;
+      padding: 4px 8px;
+      text-align: right;
+    }
+    .immigration-page th:first-child,
+    .immigration-page td:first-child {
+      text-align: left;
+    }
+    .chart-container {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ★ ログイン画面（index.htmlと同じ構成・同じキー） -->
+  <div id="login" class="login-wrapper">
+    <div class="login-card">
+      <h1>Beppu DMP ログイン</h1>
+      <p>閲覧にはパスワードが必要です。</p>
+      <form id="loginForm">
+        <input
+          id="passwordInput"
+          type="password"
+          placeholder="パスワード"
+          autocomplete="off"
+        />
+        <button type="submit">ログイン</button>
+        <p id="loginError" class="login-error"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ★ ダッシュボード本体（ログイン後に表示） -->
+  <div id="app">
+    <div class="container">
+      <h1>出入国データ（港湾・空港）ダッシュボード</h1>
+      <p class="lead">
+        大分空港・大分港・佐賀関港を対象に、年別の入国・出国データと最新年の国別内訳を可視化しています。
+      </p>
+
+      <div class="immigration-page">
+
+        <!-- 港・空港選択 -->
+        <div style="margin-bottom: 12px; margin-top: 12px;">
+          <label for="portSelect">港・空港：</label>
+          <select id="portSelect">
+            <option value="oitaairport">大分空港</option>
+            <option value="oitaport">大分港</option>
+            <option value="saganosekiport">佐賀関港</option>
+          </select>
+        </div>
+
+        <!-- 最新年の内訳 -->
+        <section style="margin-bottom: 24px;">
+          <h2>最新年 内訳（総数を除く）</h2>
+          <div id="latestYearInfo" style="margin-bottom: 8px;"></div>
+          <table id="latestBreakdownTable">
+            <thead>
+              <tr>
+                <th>国籍</th>
+                <th>入国</th>
+                <th>出国</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- JSで埋める -->
+            </tbody>
+          </table>
+          <button id="downloadLatestCsvBtn" style="margin-top: 8px;">
+            最新内訳をCSVダウンロード
+          </button>
+        </section>
+
+        <!-- 年推移グラフ -->
+        <section>
+          <h2>年推移グラフ</h2>
+
+          <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom: 8px;">
+            <!-- 入国 / 出国 -->
+            <div>
+              <label for="flowSelect">種別：</label>
+              <select id="flowSelect">
+                <option value="入国">入国</option>
+                <option value="出国">出国</option>
+              </select>
+            </div>
+
+            <!-- 国籍（総数含む） -->
+            <div>
+              <label for="nationalitySelect">国籍：</label>
+              <select id="nationalitySelect">
+                <!-- JSで埋める（総数 / 韓国 / 中国 / ...） -->
+              </select>
+            </div>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="trendChart" height="100"></canvas>
+          </div>
+
+          <button id="downloadTrendCsvBtn" style="margin-top: 8px;">
+            年推移データをCSVダウンロード
+          </button>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js（CDN） -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- このページ専用JS -->
+  <script src="immigration.js"></script>
+</body>
+</html>
