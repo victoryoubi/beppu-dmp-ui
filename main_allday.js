@@ -1,6 +1,9 @@
 // ★ここを自分のバケットに置き換え
 const DATA_URL = 'https://storage.googleapis.com/beppu_dmp/peopleflow/beppu/top_meshcode_2024_000000000000.json';
 
+// ★AIサマリJSONのURL
+const SUMMARY_URL = 'https://storage.googleapis.com/beppu_dmp/peopleflow/beppu/top_meshcode_AI_summary.json';
+
 // NDJSON → 配列
 async function fetchNdjson(url) {
   const res = await fetch(url);
@@ -15,6 +18,15 @@ async function fetchNdjson(url) {
     .map(line => JSON.parse(line));
 }
 
+// 通常の JSON → オブジェクト
+async function fetchJson(url) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch ${url}: ${res.status} ${res.statusText}`);
+  }
+  return await res.json();
+}
+
 // month のソート用ヘルパ（"2024-01" 形式を前提）
 function sortMonthStrings(months) {
   return [...new Set(months)] // unique
@@ -23,7 +35,15 @@ function sortMonthStrings(months) {
 
 async function main() {
   try {
-    const rows = await fetchNdjson(DATA_URL);
+    // 人流NDJSON と AIサマリJSON を並列で取得
+    const [rows, summaryJson] = await Promise.all([
+      fetchNdjson(DATA_URL),
+      fetchJson(SUMMARY_URL).catch(err => {
+        console.warn('AIサマリJSONの取得に失敗しました:', err);
+        return null; // サマリはなくてもグラフだけ描画できるようにする
+      })
+    ]);
+
     if (!rows.length) {
       console.warn('No data');
       return;
@@ -63,6 +83,11 @@ async function main() {
     // ---- Chart.js で描画 ----
     drawMonthlyTotalChart(sortedMonths, monthlyTotals);
     drawLatestMonthCountryChart(latestMonth, countries, countryValues);
+
+    // ---- AIサマリを描画 ----
+    if (summaryJson && (summaryJson.summary_text || summaryJson.latest_3_months)) {
+      renderSummary(summaryJson);
+    }
 
   } catch (err) {
     console.error(err);
@@ -144,6 +169,26 @@ function drawLatestMonthCountryChart(latestMonth, countries, values) {
       }
     }
   });
+}
+
+// AIサマリ描画用
+function renderSummary(summaryJson) {
+  const summaryText = summaryJson.summary_text || '';
+  const latest3 = Array.isArray(summaryJson.latest_3_months)
+    ? summaryJson.latest_3_months
+    : [];
+
+  const monthsEl = document.getElementById('summaryMonths');
+  const textEl = document.getElementById('summaryText');
+
+  if (monthsEl && latest3.length > 0) {
+    monthsEl.textContent = `AIサマリ対象期間（最新3か月）：${latest3.join(' / ')}`;
+  }
+
+  if (textEl && summaryText) {
+    // 改行をそのまま表示したいので、HTML側は white-space: pre-line にしておく
+    textEl.textContent = summaryText;
+  }
 }
 
 main();
